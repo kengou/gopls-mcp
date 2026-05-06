@@ -1,12 +1,22 @@
 # syntax=docker/dockerfile:1.7
 
-FROM golang:1.26.2-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.2-alpine3.22 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 # renovate: datasource=go depName=golang.org/x/tools/gopls
 ARG GOPLS_VERSION=v0.21.1
 
-RUN apk add --no-cache git \
- && go install golang.org/x/tools/gopls@${GOPLS_VERSION}
+ENV CGO_ENABLED=0
+
+RUN apk add --no-cache git
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go install golang.org/x/tools/gopls@${GOPLS_VERSION}
+# go install drops the binary in /go/bin or /go/bin/${OS}_${ARCH}; normalize.
+RUN install -D -m 0755 \
+      "$(find /go/bin -name gopls -type f | head -n1)" \
+      /out/gopls
 
 FROM golang:1.26.2-alpine3.22
 
@@ -16,7 +26,7 @@ RUN apk add --no-cache git ca-certificates \
  && mkdir -p /workspace \
  && chown gopls:gopls /workspace
 
-COPY --from=builder /go/bin/gopls /usr/local/bin/gopls
+COPY --from=builder /out/gopls /usr/local/bin/gopls
 
 USER gopls
 WORKDIR /workspace
