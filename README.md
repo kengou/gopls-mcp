@@ -166,6 +166,19 @@ push creates the package as **private** -- visit
 once and set visibility to public so the SLSA verification command in
 the README works without auth.
 
+## Security
+
+- Vulnerabilities: see [`SECURITY.md`](SECURITY.md) -- use GitHub's
+  private vulnerability reporting, not a public issue.
+- Supply chain: every published tag has a Sigstore SLSA build-provenance
+  attestation on GHCR. Verify with the `gh attestation verify` commands
+  shown in [Verifying the image](#verifying-the-image).
+- Continuous checks: OpenSSF Scorecard, CodeQL Actions analysis,
+  dependency review on PRs, and a daily Trivy CVE scan of the published
+  image -- all surfaced in the GitHub *Security* tab.
+- Repository hardening checklist (manual settings, applied once):
+  [`.github/HARDENING.md`](.github/HARDENING.md).
+
 ## License
 
 BSD-3-Clause, matching upstream gopls. See [`LICENSE`](LICENSE). The
