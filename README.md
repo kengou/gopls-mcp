@@ -29,11 +29,16 @@ and analyze Go workspaces structurally instead of grepping.
 
 ```bash
 # Docker Hub
-docker run --rm -i -v "$PWD:/workspace:ro" davidgogl/gopls-mcp:latest
+docker run --rm -i -v "$PWD:$PWD:ro" davidgogl/gopls-mcp:latest
 
 # or GitHub Container Registry (carries the SLSA build provenance attestation)
-docker run --rm -i -v "$PWD:/workspace:ro" ghcr.io/kengou/gopls-mcp:latest
+docker run --rm -i -v "$PWD:$PWD:ro" ghcr.io/kengou/gopls-mcp:latest
 ```
+
+The volume mount uses the **same path** on both sides of the colon. This
+matters: agents pass host paths to gopls' tools (e.g. `go_file_context`),
+so the source files must be reachable inside the container at exactly
+those paths. Drop `:ro` if you want gopls quick-fixes applied in place.
 
 The container reads JSON-RPC on stdin and writes on stdout, so it's only
 useful when launched by an MCP client. For interactive use, register it
@@ -75,6 +80,11 @@ it. In every snippet below:
 
 - replace `/abs/path/to/your/go/workspace` with the absolute host path of
   the Go project you want gopls to analyze;
+- the volume mount uses the **same path on both sides** of the colon
+  (`-v <path>:<path>`). This is intentional -- agents pass host paths
+  to gopls' tools (`go_file_context`, `go_symbol_references`, ...), so
+  the source files must be reachable inside the container at exactly
+  those paths. The standard MCP-over-Docker pattern;
 - drop `:ro` from the volume mount if you want gopls quick-fixes applied
   in place.
 
@@ -88,7 +98,7 @@ CLI (recommended):
 ```bash
 claude mcp add gopls --scope user -- \
   docker run --rm -i \
-    -v /abs/path/to/your/go/workspace:/workspace:ro \
+    -v /abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro \
     davidgogl/gopls-mcp:latest
 ```
 
@@ -102,7 +112,7 @@ Or hand-edit `~/.claude.json` (user-scope) or a project-local
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "-v", "/abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro",
         "davidgogl/gopls-mcp:latest"
       ]
     }
@@ -124,7 +134,7 @@ Edit the config file and restart the app:
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "-v", "/abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro",
         "davidgogl/gopls-mcp:latest"
       ]
     }
@@ -144,7 +154,7 @@ then enable the server in *Settings -> MCP*:
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "-v", "/abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro",
         "davidgogl/gopls-mcp:latest"
       ]
     }
@@ -164,7 +174,7 @@ in Cascade:
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "-v", "/abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro",
         "davidgogl/gopls-mcp:latest"
       ]
     }
@@ -185,7 +195,7 @@ in user `settings.json`):
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "${workspaceFolder}:/workspace:ro",
+        "-v", "${workspaceFolder}:${workspaceFolder}:ro",
         "davidgogl/gopls-mcp:latest"
       ]
     }
@@ -208,7 +218,7 @@ or edit `cline_mcp_settings.json` directly:
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "-v", "/abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro",
         "davidgogl/gopls-mcp:latest"
       ]
     }
@@ -229,7 +239,7 @@ Add to `~/.config/zed/settings.json` (or *Cmd-,* on macOS) under
         "path": "docker",
         "args": [
           "run", "--rm", "-i",
-          "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+          "-v", "/abs/path/to/your/go/workspace:/abs/path/to/your/go/workspace:ro",
           "davidgogl/gopls-mcp:latest"
         ]
       }
@@ -240,10 +250,10 @@ Add to `~/.config/zed/settings.json` (or *Cmd-,* on macOS) under
 
 ### Other MCP clients
 
-The pattern is the same: `command: docker`, `args` is a `docker run --rm
--i -v <workspace>:/workspace[:ro] davidgogl/gopls-mcp:latest`. If your
-client supports a "stdio" transport and a JSON config in this shape,
-gopls-mcp will work.
+The pattern is the same: `command: docker`, `args` is `docker run --rm
+-i -v <path>:<path>[:ro] davidgogl/gopls-mcp:latest` (host path on both
+sides of the colon, see preamble above). If your client supports a
+"stdio" transport and a JSON config in this shape, gopls-mcp will work.
 
 ## Image details
 
