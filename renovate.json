@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "schedule:weekly"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Auto-merge patch and digest updates",
+      "matchUpdateTypes": ["patch", "digest", "pin"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "gopls major/minor updates need manual review",
+      "matchPackageNames": ["golang.org/x/tools/gopls"],
+      "matchUpdateTypes": ["major", "minor"],
+      "automerge": false,
+      "labels": ["dependencies", "gopls"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>\\S+?)(?:\\s+versioning=(?<versioning>[a-z-]+?))?\\s+ARG\\s+\\S+=(?<currentValue>\\S+)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    }
+  ]
+}

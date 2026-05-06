@@ -1,0 +1,44 @@
+name: gopls
+image: davidgogl/gopls-mcp:latest
+type: server
+meta:
+  category: developer-tools
+  tags:
+    - go
+    - golang
+    - language-server
+    - lsp
+    - code-intelligence
+about:
+  title: gopls MCP
+  description: |
+    The official Go language server (gopls) exposed as a Model Context
+    Protocol server. Lets MCP-aware clients explore Go workspaces with
+    structural search, file context, package APIs, symbol references,
+    diagnostics, and govulncheck-powered vulnerability scanning.
+
+    Tools provided:
+      - go_workspace        Inspect module / workspace layout
+      - go_search           Fuzzy symbol search
+      - go_file_context     Intra-package dependencies for a file
+      - go_package_api      Public API of a package
+      - go_symbol_references  Find all references to a symbol
+      - go_diagnostics      Build and analysis errors
+      - go_vulncheck        govulncheck on a pattern
+  icon: https://go.dev/images/go-logo-blue.svg
+source:
+  project: https://github.com/davidgogl/gopls-mcp
+config:
+  description: |
+    Mount the Go workspace you want to analyze at /workspace inside the
+    container. The image runs as a non-root `gopls` user; ensure the
+    mount is readable by UID/GID of that user (or use :ro if read-only
+    analysis is enough).
+  parameters:
+    type: object
+    properties:
+      workspace:
+        type: string
+        description: Absolute host path to the Go workspace to mount at /workspace
+    required:
+      - workspace

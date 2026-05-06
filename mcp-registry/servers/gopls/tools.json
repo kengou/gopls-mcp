@@ -1,0 +1,107 @@
+[
+  {
+    "name": "go_workspace",
+    "description": "Describe the Go workspace at the given root: whether it is a module, a multi-module workspace (go.work), or a GOPATH project, and the modules it contains.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "go_search",
+    "description": "Fuzzy-search the workspace for Go symbols (types, functions, variables, methods). Useful when you don't know the exact name or location.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Fuzzy query, e.g. 'server' or 'Server.Run'"
+        }
+      },
+      "required": ["query"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "go_file_context",
+    "description": "Summarize the declarations from other files in the same package that are referenced by the given Go file. Run this immediately after reading any Go file for the first time.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Absolute path to a .go file inside the mounted workspace"
+        }
+      },
+      "required": ["file"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "go_package_api",
+    "description": "Return the public API of one or more Go packages: exported types, functions, methods, variables, and constants with their signatures and doc comments.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "packagePaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Import paths, e.g. ['example.com/internal/storage']"
+        }
+      },
+      "required": ["packagePaths"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "go_symbol_references",
+    "description": "Find all references to a symbol declared at the given file. Use before modifying a symbol's definition to understand the blast radius.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Absolute path to the .go file declaring the symbol"
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Symbol name, optionally qualified by receiver type (e.g. 'Server.Run')"
+        }
+      },
+      "required": ["file", "symbol"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "go_diagnostics",
+    "description": "Report build and analysis diagnostics (errors, warnings, hints) for the given files, including any quick-fix diffs gopls can suggest.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Absolute paths of .go files to check"
+        }
+      },
+      "required": ["files"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "go_vulncheck",
+    "description": "Run govulncheck against a package pattern (e.g. './...') and report known vulnerabilities affecting symbols actually reachable from the workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Go package pattern, e.g. './...' or 'example.com/cmd/...'"
+        }
+      },
+      "required": ["pattern"],
+      "additionalProperties": false
+    }
+  }
+]

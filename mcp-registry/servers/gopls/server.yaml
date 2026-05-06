@@ -1,0 +1,45 @@
+# Submission to https://github.com/docker/mcp-registry
+# When submitting, copy this file to servers/gopls/server.yaml in a fork of
+# docker/mcp-registry, alongside the tools.json and readme.md in this folder.
+# Set source.commit to the exact commit being released (CI emits it as
+# the org.opencontainers.image.revision label on the published image).
+
+name: gopls
+image: davidgogl/gopls-mcp
+type: server
+meta:
+  category: developer-tools
+  tags:
+    - go
+    - golang
+    - language-server
+    - lsp
+    - code-intelligence
+    - static-analysis
+about:
+  title: gopls
+  description: |
+    The official Go language server (gopls) exposed over the Model
+    Context Protocol. Gives MCP clients structural access to Go
+    workspaces -- module layout, fuzzy symbol search, intra-package file
+    dependencies, public package APIs, symbol references, build and
+    analysis diagnostics, and govulncheck-powered vulnerability scans --
+    instead of falling back to grep.
+  icon: https://go.dev/images/go-logo-blue.svg
+source:
+  project: https://github.com/davidgogl/gopls-mcp
+  # commit: <pinned at submission time>
+config:
+  description: |
+    Mount the Go workspace you want gopls to analyze at /workspace inside
+    the container. The image runs as a non-root `gopls` user; ensure the
+    bind mount is readable by that user. Use a read-only mount unless you
+    want gopls quick-fixes to be applied directly.
+  parameters:
+    type: object
+    properties:
+      workspace:
+        type: string
+        description: Absolute host path to the Go workspace to mount at /workspace
+    required:
+      - workspace
