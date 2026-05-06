@@ -3,7 +3,7 @@
 [![Docker](https://github.com/kengou/gopls-mcp/actions/workflows/docker.yml/badge.svg)](https://github.com/kengou/gopls-mcp/actions/workflows/docker.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/davidgogl/gopls-mcp.svg)](https://hub.docker.com/r/davidgogl/gopls-mcp)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kengou/gopls-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/kengou/gopls-mcp)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12763/badge)](https://www.bestpractices.dev/projects/12763)
+[![OpenSSF Baseline](https://www.bestpractices.dev/projects/12763/baseline)](https://www.bestpractices.dev/projects/12763)
 
 The official Go language server, [`gopls`](https://pkg.go.dev/golang.org/x/tools/gopls),
 packaged as a [Model Context Protocol](https://modelcontextprotocol.io/)
