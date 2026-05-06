@@ -52,4 +52,4 @@ Claude Desktop / Claude Code:
   out to `go list`, `go build`, etc.
 - Multi-arch: `linux/amd64`, `linux/arm64`.
 - Image tag tracks the upstream gopls version (e.g. `v0.21.1`).
-- Source: <https://github.com/davidgogl/gopls-mcp>.
+- Source: <https://github.com/kengou/gopls-mcp>.

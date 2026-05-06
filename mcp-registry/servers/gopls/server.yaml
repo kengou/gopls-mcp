@@ -27,7 +27,7 @@ about:
     instead of falling back to grep.
   icon: https://go.dev/images/go-logo-blue.svg
 source:
-  project: https://github.com/davidgogl/gopls-mcp
+  project: https://github.com/kengou/gopls-mcp
   # commit: <pinned at submission time>
 config:
   description: |

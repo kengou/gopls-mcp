@@ -36,7 +36,7 @@ ENV GOPATH=/home/gopls/go \
 
 LABEL org.opencontainers.image.title="gopls MCP server" \
       org.opencontainers.image.description="Go language server (gopls) exposed as a Model Context Protocol server" \
-      org.opencontainers.image.source="https://github.com/davidgogl/gopls-mcp" \
+      org.opencontainers.image.source="https://github.com/kengou/gopls-mcp" \
       org.opencontainers.image.licenses="BSD-3-Clause" \
       org.opencontainers.image.vendor="David Gogl"
 

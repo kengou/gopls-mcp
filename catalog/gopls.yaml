@@ -27,7 +27,7 @@ about:
       - go_vulncheck        govulncheck on a pattern
   icon: https://go.dev/images/go-logo-blue.svg
 source:
-  project: https://github.com/davidgogl/gopls-mcp
+  project: https://github.com/kengou/gopls-mcp
 config:
   description: |
     Mount the Go workspace you want to analyze at /workspace inside the
