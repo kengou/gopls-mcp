@@ -26,14 +26,28 @@ and analyze Go workspaces structurally instead of grepping.
 ## Quick start
 
 ```bash
-docker run --rm -i \
-  -v "$PWD:/workspace:ro" \
-  davidgogl/gopls-mcp:latest
+# Docker Hub
+docker run --rm -i -v "$PWD:/workspace:ro" davidgogl/gopls-mcp:latest
+
+# or GitHub Container Registry (carries the SLSA build provenance attestation)
+docker run --rm -i -v "$PWD:/workspace:ro" ghcr.io/kengou/gopls-mcp:latest
 ```
 
 The container reads JSON-RPC on stdin and writes on stdout, so it's only
 useful when launched by an MCP client. For interactive use, register it
 with one of the integrations below.
+
+## Verifying the image
+
+Each published tag carries a SLSA build-provenance attestation. The
+attestation is attached to the GHCR copy (Docker Hub does not yet
+implement the OCI 1.1 referrers API), but because the image digest is
+identical in both registries it verifies either copy:
+
+```bash
+gh attestation verify oci://ghcr.io/kengou/gopls-mcp:v0.21.1     --owner kengou
+gh attestation verify oci://docker.io/davidgogl/gopls-mcp:v0.21.1 --owner kengou
+```
 
 ## Docker Desktop MCP Toolkit
 
@@ -118,7 +132,7 @@ docker build --build-arg GOPLS_VERSION=v0.21.1 -t gopls-mcp:dev .
 .
 ├── Dockerfile                  # Multi-stage build, non-root, pinned versions
 ├── .dockerignore
-├── .github/workflows/docker.yml  # Multi-arch build & push to Docker Hub
+├── .github/workflows/docker.yml  # Multi-arch build & push to Docker Hub + GHCR
 ├── renovate.json               # gopls + Go base image auto-update
 ├── catalog/
 │   ├── gopls.yaml              # MCP catalog server entry (private use)
@@ -145,6 +159,12 @@ The `docker.yml` workflow needs two repository secrets:
 - `DOCKERHUB_TOKEN` -- a Docker Hub
   [access token](https://hub.docker.com/settings/security) with
   `Read, Write` scope on the `davidgogl/gopls-mcp` repo
+
+GHCR uses the built-in `GITHUB_TOKEN`; no extra secret needed. The first
+push creates the package as **private** -- visit
+<https://github.com/users/kengou/packages/container/gopls-mcp/settings>
+once and set visibility to public so the SLSA verification command in
+the README works without auth.
 
 ## License
 

@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: davidgogl/gopls-mcp
+  DOCKERHUB_IMAGE: davidgogl/gopls-mcp
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
 
 permissions:
   contents: read
@@ -18,8 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
-      attestations: write
+      packages: write       # GHCR push
+      id-token: write       # OIDC for build provenance
+      attestations: write   # GitHub attestation API
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,11 +60,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
           tags: |
             type=raw,value=${{ steps.gopls.outputs.v_tag }},enable={{is_default_branch}}
             type=raw,value=${{ steps.gopls.outputs.num }},enable={{is_default_branch}}
@@ -89,11 +101,17 @@ jobs:
           provenance: mode=max
           sbom: true
 
-      - name: Generate artifact attestation
+      # Attestation is pushed only to GHCR. Docker Hub does not implement the
+      # OCI 1.1 referrers API yet, so push-to-registry against docker.io 401s.
+      # The image digest is identical in both registries, so this attestation
+      # also verifies the Docker Hub copy:
+      #   gh attestation verify oci://docker.io/davidgogl/gopls-mcp:<tag> \
+      #     --owner ${{ github.repository_owner }}
+      - name: Generate artifact attestation (GHCR)
         if: github.event_name != 'pull_request'
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: docker.io/${{ env.IMAGE_NAME }}
+          subject-name: ${{ env.GHCR_IMAGE }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
@@ -110,6 +128,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.IMAGE_NAME }}
+          repository: ${{ env.DOCKERHUB_IMAGE }}
           short-description: ${{ github.event.repository.description }}
           readme-filepath: ./README.md
