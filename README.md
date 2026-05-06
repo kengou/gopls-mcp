@@ -176,8 +176,11 @@ the README works without auth.
 - Continuous checks: OpenSSF Scorecard, CodeQL Actions analysis,
   dependency review on PRs, and a daily Trivy CVE scan of the published
   image -- all surfaced in the GitHub *Security* tab.
-- Repository hardening checklist (manual settings, applied once):
-  [`.github/HARDENING.md`](.github/HARDENING.md).
+- Repository hardening: run [`scripts/harden-repo.sh`](scripts/harden-repo.sh)
+  once with admin `gh` auth -- it applies branch protection, secret
+  scanning, push protection, private vulnerability reporting, and
+  workflow-token restrictions in one shot. See
+  [`.github/HARDENING.md`](.github/HARDENING.md) for what it does.
 
 ## License
 
