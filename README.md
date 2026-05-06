@@ -68,10 +68,32 @@ Then **Import catalog** in Docker Desktop -> MCP Toolkit, enable the
 `gopls` server, and point its `workspace` parameter at the Go project you
 want to analyze.
 
-## Claude Code / Claude Desktop
+## Adding to coding agents
 
-Add to your MCP client config (`~/.claude/claude_desktop_config.json` for
-Desktop; equivalent for Claude Code):
+The container speaks MCP over stdio, so any MCP-aware client can launch
+it. In every snippet below:
+
+- replace `/abs/path/to/your/go/workspace` with the absolute host path of
+  the Go project you want gopls to analyze;
+- drop `:ro` from the volume mount if you want gopls quick-fixes applied
+  in place.
+
+Each agent only needs **one** of CLI command or JSON config -- pick
+whichever fits your workflow.
+
+### Claude Code
+
+CLI (recommended):
+
+```bash
+claude mcp add gopls --scope user -- \
+  docker run --rm -i \
+    -v /abs/path/to/your/go/workspace:/workspace:ro \
+    davidgogl/gopls-mcp:latest
+```
+
+Or hand-edit `~/.claude.json` (user-scope) or a project-local
+`.mcp.json`:
 
 ```json
 {
@@ -88,19 +110,157 @@ Desktop; equivalent for Claude Code):
 }
 ```
 
-Replace `/abs/path/to/your/go/workspace` with the path on your machine.
-Drop `:ro` if you want gopls quick-fixes to be applied directly.
+### Claude Desktop
+
+Edit the config file and restart the app:
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "gopls": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "davidgogl/gopls-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+### Cursor
+
+Edit `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per-project),
+then enable the server in *Settings -> MCP*:
+
+```json
+{
+  "mcpServers": {
+    "gopls": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "davidgogl/gopls-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+### Windsurf
+
+Edit `~/.codeium/windsurf/mcp_config.json`, then refresh the MCP panel
+in Cascade:
+
+```json
+{
+  "mcpServers": {
+    "gopls": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "davidgogl/gopls-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+### VS Code (native MCP, 1.99+)
+
+Create `.vscode/mcp.json` in your workspace (or add under `mcp.servers`
+in user `settings.json`):
+
+```json
+{
+  "servers": {
+    "gopls": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "${workspaceFolder}:/workspace:ro",
+        "davidgogl/gopls-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+`${workspaceFolder}` is resolved by VS Code, so you don't need a literal
+path here. Then enable it in *Chat -> MCP Servers*.
+
+### Cline (VS Code extension)
+
+In Cline's chat pane: *Settings -> MCP Servers -> Edit MCP settings*,
+or edit `cline_mcp_settings.json` directly:
+
+```json
+{
+  "mcpServers": {
+    "gopls": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+        "davidgogl/gopls-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+### Zed
+
+Add to `~/.config/zed/settings.json` (or *Cmd-,* on macOS) under
+`context_servers`:
+
+```json
+{
+  "context_servers": {
+    "gopls": {
+      "command": {
+        "path": "docker",
+        "args": [
+          "run", "--rm", "-i",
+          "-v", "/abs/path/to/your/go/workspace:/workspace:ro",
+          "davidgogl/gopls-mcp:latest"
+        ]
+      }
+    }
+  }
+}
+```
+
+### Other MCP clients
+
+The pattern is the same: `command: docker`, `args` is a `docker run --rm
+-i -v <workspace>:/workspace[:ro] davidgogl/gopls-mcp:latest`. If your
+client supports a "stdio" transport and a JSON config in this shape,
+gopls-mcp will work.
 
 ## Image details
 
-- Base: `golang:1.26.2-alpine3.22` (full Go toolchain at runtime; gopls
-  shells out to `go list`, `go build`, etc.)
-- gopls version: pinned in [`Dockerfile`](Dockerfile),
-  bumped automatically by Renovate
+- Base: `golang:1.26.2-alpine3.22`, pinned by `sha256:` digest in the
+  [`Dockerfile`](Dockerfile). Full Go toolchain at runtime because gopls
+  shells out to `go list`, `go build`, etc.
+- gopls version: pinned in the [`Dockerfile`](Dockerfile), bumped
+  automatically by Renovate
+- Builder stage cross-compiles with `--platform=$BUILDPLATFORM` -- no
+  QEMU emulation for the `go install` step
 - User: non-root (`gopls`, UID/GID auto-assigned by Alpine)
 - Workdir: `/workspace`
 - Architectures: `linux/amd64`, `linux/arm64`
-- Build provenance + SBOM attached to every published tag
+- Distribution: published to **Docker Hub** (`davidgogl/gopls-mcp`) and
+  **GHCR** (`ghcr.io/kengou/gopls-mcp`) with the same digest
+- Each tag carries a Sigstore SLSA build-provenance attestation (on
+  GHCR; verifies the Docker Hub copy too) and a buildkit-generated SBOM
 
 ## Versioning
 
@@ -124,49 +284,52 @@ Pin `vX.Y.Z` (or `X.Y`) in production; let Renovate bump you.
 
 ```bash
 docker build -t gopls-mcp:dev .
+
 # Override the gopls version:
-docker build --build-arg GOPLS_VERSION=v0.21.1 -t gopls-mcp:dev .
+docker build --build-arg GOPLS_VERSION=v0.20.0 -t gopls-mcp:dev .
+
+# Multi-arch build matching CI:
+docker buildx build --platform linux/amd64,linux/arm64 -t gopls-mcp:dev .
 ```
 
 ## Repository layout
 
 ```
 .
-├── Dockerfile                  # Multi-stage build, non-root, pinned versions
+├── Dockerfile                          # Multi-stage cross-compile, non-root, digest-pinned
 ├── .dockerignore
-├── .github/workflows/docker.yml  # Multi-arch build & push to Docker Hub + GHCR
-├── renovate.json               # gopls + Go base image auto-update
+├── .github/workflows/
+│   ├── docker.yml                      # Multi-arch build & push to Docker Hub + GHCR
+│   ├── dockerhub-readme.yml            # Sync README to Docker Hub on README changes
+│   ├── codeql.yml                      # CodeQL Actions analysis
+│   ├── dependency-review.yml           # Block PRs introducing vulnerable deps
+│   ├── scorecard.yml                   # OpenSSF Scorecard, weekly + on push
+│   └── trivy.yml                       # Daily image CVE scan (SARIF -> Security tab)
+├── renovate.json                       # gopls + base image + GH Actions auto-update
 ├── catalog/
-│   ├── gopls.yaml              # MCP catalog server entry (private use)
-│   └── README.md               # How to register with Docker Desktop
-├── mcp-registry/servers/gopls/   # Submission to docker/mcp-registry
+│   ├── gopls.yaml                      # MCP catalog server entry (private use)
+│   └── README.md                       # How to register with Docker Desktop
+├── mcp-registry/servers/gopls/         # Future submission to docker/mcp-registry
 │   ├── server.yaml
 │   ├── tools.json
 │   └── readme.md
+├── SECURITY.md                         # Vuln disclosure + image verification
+├── LICENSE                             # BSD-3-Clause
 └── README.md
 ```
 
 ## Releases
 
-There are no manual releases. Merge a Renovate PR (or hand-edit
-`ARG GOPLS_VERSION` in the Dockerfile), push to `main`, and CI publishes
-the matching tags to Docker Hub plus a Sigstore-backed build provenance
-attestation.
+There are no manual releases. Renovate opens a PR bumping
+`ARG GOPLS_VERSION` (or the base-image digest); merge it, and the next
+push to `main` publishes the matching tags to Docker Hub *and* GHCR plus
+a Sigstore SLSA build-provenance attestation. Patch / digest bumps are
+configured to auto-merge once status checks pass.
 
-## CI secrets
-
-The `docker.yml` workflow needs two repository secrets:
-
-- `DOCKERHUB_USERNAME` -- your Docker Hub user
-- `DOCKERHUB_TOKEN` -- a Docker Hub
-  [access token](https://hub.docker.com/settings/security) with
-  `Read, Write` scope on the `davidgogl/gopls-mcp` repo
-
-GHCR uses the built-in `GITHUB_TOKEN`; no extra secret needed. The first
-push creates the package as **private** -- visit
-<https://github.com/users/kengou/packages/container/gopls-mcp/settings>
-once and set visibility to public so the SLSA verification command in
-the README works without auth.
+CI only runs the Docker workflow when `Dockerfile`, `.dockerignore`, or
+`.github/workflows/docker.yml` change -- doc-only changes (README,
+catalog/, ...) skip the build. README edits trigger a small companion
+workflow that syncs the description to Docker Hub.
 
 ## Security
 
@@ -178,11 +341,10 @@ the README works without auth.
 - Continuous checks: OpenSSF Scorecard, CodeQL Actions analysis,
   dependency review on PRs, and a daily Trivy CVE scan of the published
   image -- all surfaced in the GitHub *Security* tab.
-- Repository hardening: run [`scripts/harden-repo.sh`](scripts/harden-repo.sh)
-  once with admin `gh` auth -- it applies branch protection, secret
-  scanning, push protection, private vulnerability reporting, and
-  workflow-token restrictions in one shot. See
-  [`.github/HARDENING.md`](.github/HARDENING.md) for what it does.
+- Repository hardening: branch protection ruleset on `main` (no
+  deletion, no force-push, signed commits, PR required with admin
+  bypass for emergency fixes), secret scanning + push protection, and
+  private vulnerability reporting are all enabled.
 
 ## License
 
