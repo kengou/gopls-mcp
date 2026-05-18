@@ -6,7 +6,7 @@ ARG TARGETOS
 ARG TARGETARCH
 
 # renovate: datasource=go depName=golang.org/x/tools/gopls
-ARG GOPLS_VERSION=v0.21.1
+ARG GOPLS_VERSION=v0.22.0
 
 ENV CGO_ENABLED=0
 
