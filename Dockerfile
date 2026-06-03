@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.23@sha256:2780b5c3bab67f1f76c781860de469442999ed1a0d7992a5efdf2cffc0e3d769
 
-FROM --platform=$BUILDPLATFORM golang:1.26.3-alpine3.22@sha256:be93003ee861b3b91b6ebcb22678524947e0cd786c2df3f32af520006b1e54f5 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.4-alpine3.22@sha256:727cfc3c40be55cd1bc9a4a059406b28a059857e3be752aa9d09531e12c20c56 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -18,7 +18,7 @@ RUN install -D -m 0755 \
       "$(find /go/bin -name gopls -type f | head -n1)" \
       /out/gopls
 
-FROM golang:1.26.3-alpine3.22@sha256:be93003ee861b3b91b6ebcb22678524947e0cd786c2df3f32af520006b1e54f5
+FROM golang:1.26.4-alpine3.22@sha256:727cfc3c40be55cd1bc9a4a059406b28a059857e3be752aa9d09531e12c20c56
 
 RUN apk add --no-cache git ca-certificates \
  && addgroup -S gopls \
